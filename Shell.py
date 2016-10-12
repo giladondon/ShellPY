@@ -14,6 +14,7 @@
 
 #region ----------   IMPORTS   -----------------------------
 import subprocess
+import os
 #endregion
 
 #region ----------   GLOBAL SETTINGS   ---------------------
@@ -29,10 +30,13 @@ INPUT_SYMBOL = "*(.)_(.)* "
 ILLEGAL_COMMAND = "Fool me once - Shame on you\nFool me twice - Shame on me"
 LEGAL_INDEX = 0
 OUTPUT_INDEX = 1
+COMMAND_INDEX = 0
 EXIT_COMMANDS = ["exit", "quit", "bye", "leave"]
 EXIT_SYNTAX = "exit"
 SPACE = " "
 EMPTY = ""
+PYTHON_SIGN = ".py"
+PYTHON_RUN = "python"
 #endregion
 
 #region ----------   FUNCTIONS   ---------------------------
@@ -67,14 +71,40 @@ def run_command(parsed_command):
     runs command in shell
     :return : Is_Legal, Output from shell
     """
-    if parsed_command[0].lower() in EXIT_COMMANDS:
+    if parsed_command[COMMAND_INDEX].lower() in EXIT_COMMANDS:
         return True, EXIT_SYNTAX
     try:
         command_output = subprocess.check_output(parsed_command)
         return True, command_output
     except WindowsError:
-        print ILLEGAL_COMMAND
-        return False, EMPTY
+        if not is_python_script(parsed_command):
+            print ILLEGAL_COMMAND
+            return False, EMPTY
+        command_output = run_python_script(parsed_command)
+        return True, command_output
+
+# ----------------------------------------------------------
+
+
+def is_python_script(parsed_command):
+    """
+    :param parsed_command: parsed (by spaces) command input from user
+    :return : True if python script exists
+    """
+    return os.path.exists(PYTHON_SCRIPTS_PATH + os.sep + parsed_command[COMMAND_INDEX] + PYTHON_SIGN)
+
+# ----------------------------------------------------------
+
+
+def run_python_script(parsed_command):
+    """
+    :param parsed_command: parsed (by spaces) command input from user
+    runs python script
+    :return : output of python script
+    """
+    parsed_command[COMMAND_INDEX] = PYTHON_SCRIPTS_PATH + os.sep + parsed_command[COMMAND_INDEX] + PYTHON_SIGN
+    return subprocess.check_output([PYTHON_RUN] + parsed_command)
+
 
 #endregion
 
@@ -82,6 +112,9 @@ def run_command(parsed_command):
 
 
 def main_loop():
+    """
+    Receives commands from user, runs in shell and returns output
+    """
     data_output = run_command(user_input())
     if data_output[LEGAL_INDEX] and data_output[OUTPUT_INDEX] in EXIT_COMMANDS:
         return False

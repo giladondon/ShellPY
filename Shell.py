@@ -24,13 +24,14 @@ __name__ = "main"
 
 #region -----------  CONSTANTS  ----------------------------
 CMD_COMMAND_PATH = "C:\Windows\System32"
-PYTHON_SCRIPTS_PATH = "C:\Heights\Documents\Coding\ShellPY"
+PYTHON_SCRIPTS_PATH = ["C:\Heights\Documents\Coding\ShellPY"]
 WELCOME_MESSAGE = "Giladondon's Window [Version 1.0]\n(c) 2016 Giladondon Corporation. All rights reserved.\n"
 INPUT_SYMBOL = "*(.)_(.)* "
 ILLEGAL_COMMAND = "Fool me once - Shame on you\nFool me twice - Shame on me"
 LEGAL_INDEX = 0
 OUTPUT_INDEX = 1
 COMMAND_INDEX = 0
+PATH_INDEX = 1
 EXIT_COMMANDS = ["exit", "quit", "bye", "leave"]
 EXIT_SYNTAX = "exit"
 SPACE = " "
@@ -77,10 +78,10 @@ def run_command(parsed_command):
         command_output = subprocess.check_output(parsed_command)
         return True, command_output
     except WindowsError:
-        if not is_python_script(parsed_command):
+        if not is_python_script(parsed_command)[LEGAL_INDEX]:
             print ILLEGAL_COMMAND
             return False, EMPTY
-        command_output = run_python_script(parsed_command)
+        command_output = run_python_script(parsed_command, is_python_script(parsed_command)[PATH_INDEX])
         return True, command_output
 
 # ----------------------------------------------------------
@@ -91,18 +92,26 @@ def is_python_script(parsed_command):
     :param parsed_command: parsed (by spaces) command input from user
     :return : True if python script exists
     """
-    return os.path.exists(PYTHON_SCRIPTS_PATH + os.sep + parsed_command[COMMAND_INDEX] + PYTHON_SIGN)
+    is_python_script_flag = False
+    correct_path = EMPTY
+
+    for path in PYTHON_SCRIPTS_PATH:
+        if os.path.exists(path + os.sep + parsed_command[COMMAND_INDEX] + PYTHON_SIGN):
+            is_python_script_flag = True
+            correct_path = path
+
+    return is_python_script_flag, correct_path
 
 # ----------------------------------------------------------
 
 
-def run_python_script(parsed_command):
+def run_python_script(parsed_command, path):
     """
     :param parsed_command: parsed (by spaces) command input from user
     runs python script
     :return : output of python script
     """
-    parsed_command[COMMAND_INDEX] = PYTHON_SCRIPTS_PATH + os.sep + parsed_command[COMMAND_INDEX] + PYTHON_SIGN
+    parsed_command[COMMAND_INDEX] = path + os.sep + parsed_command[COMMAND_INDEX] + PYTHON_SIGN
     return subprocess.check_output([PYTHON_RUN] + parsed_command)
 
 
